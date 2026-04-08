@@ -343,7 +343,49 @@ export async function getAiChatResponse(chatHistory: Message[]) {
     return "Sorry, I'm having trouble connecting to my knowledge base right now. Please try again later.";
   }
 }
+// --- FOOD MANAGEMENT ACTION ---
 
+export async function addFood(formData: FormData) {
+  const supabase = createClient();
+
+  // optional: check user login
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("You must be logged in to add food.");
+  }
+
+  const foodData = {
+    name: formData.get("name") as string,
+    serving_size: formData.get("serving_size") as string,
+    calories: Number(formData.get("calories")),
+    protein_g: Number(formData.get("protein_g")),
+    carbs_g: Number(formData.get("carbs_g")),
+    fat_g: Number(formData.get("fat_g")),
+    fiber_g: Number(formData.get("fiber_g")),
+    virya: formData.get("virya") as string,
+    vata_effect: formData.get("vata_effect") as string,
+    pitta_effect: formData.get("pitta_effect") as string,
+    kapha_effect: formData.get("kapha_effect") as string,
+    food_category: formData.get("food_category") as string,
+
+    // arrays
+    rasa: formData.getAll("rasa"),
+    guna: formData.getAll("guna"),
+    meal_type: formData.getAll("meal_type"),
+    tags: formData.getAll("tags"),
+  };
+
+  const { error } = await supabase.from("foods").insert([foodData]);
+
+  if (error) {
+    console.error("Error adding food:", error.message);
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/dashboard/foods");
+  redirect("/dashboard/foods?message=Food added successfully!");
+}
 export async function viewPatientDashboard(formData: FormData) {
   const supabase = createClient();
   const email = formData.get('email') as string;
